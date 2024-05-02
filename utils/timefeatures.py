@@ -16,6 +16,7 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+from pandas import DateOffset
 from pandas.tseries import offsets
 from pandas.tseries.frequencies import to_offset
 
@@ -25,7 +26,7 @@ class TimeFeature:
         pass
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
-        pass
+        return np.ndarray()
 
     def __repr__(self):
         return self.__class__.__name__ + "()"
@@ -121,7 +122,7 @@ def time_features_from_frequency_str(freq_str: str) -> List[TimeFeature]:
         ],
     }
 
-    offset = to_offset(freq_str)
+    offset: DateOffset = to_offset(freq_str)
 
     for offset_type, feature_classes in features_by_offsets.items():
         if isinstance(offset, offset_type):

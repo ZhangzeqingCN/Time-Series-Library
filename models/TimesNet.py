@@ -1,21 +1,26 @@
+from typing import Tuple, Union
+
 import torch
+import torch.fft
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.fft
-from layers.Embed import DataEmbedding
+from torch import Tensor, Size
+
 from layers.Conv_Blocks import Inception_Block_V1
+from layers.Embed import DataEmbedding
 
 
-def FFT_for_Period(x, k=2):
+def FFT_for_Period(x: Tensor, k=2):
     # [B, T, C]
-    xf = torch.fft.rfft(x, dim=1)
+    xf: Tensor = torch.fft.rfft(x, dim=1)
     # find period by amplitudes
-    frequency_list = abs(xf).mean(0).mean(-1)
+    frequency_list: Tensor = abs(xf).mean(0).mean(-1)
     frequency_list[0] = 0
-    _, top_list = torch.topk(frequency_list, k)
-    top_list = top_list.detach().cpu().numpy()
-    period = x.shape[1] // top_list
-    return period, abs(xf).mean(-1)[:, top_list]
+    topk_res: torch.return_types.topk = torch.topk(input=frequency_list, k=k)
+    topk_indices = topk_res.indices
+    topk_indices = topk_indices.detach().cpu().numpy()
+    period = x.shape[1] // topk_indices
+    return period, abs(xf).mean(-1)[:, topk_indices]
 
 
 class TimesBlock(nn.Module):
@@ -33,8 +38,11 @@ class TimesBlock(nn.Module):
                                num_kernels=configs.num_kernels)
         )
 
-    def forward(self, x):
-        B, T, N = x.size()
+    def forward(self, x: Tensor):
+        x_size: Union[Tuple[int, int, int], Size] = x.size()
+        B: int = x_size[0]
+        T: int = x_size[0]
+        N: int = x_size[0]
         period_list, period_weight = FFT_for_Period(x, self.k)
 
         res = []
@@ -115,16 +123,13 @@ class Model(nn.Module):
         # TimesNet
         for i in range(self.layer):
             enc_out = self.layer_norm(self.model[i](enc_out))
-        # porject back
+        # project back
         dec_out = self.projection(enc_out)
 
         # De-Normalization from Non-stationary Transformer
-        dec_out = dec_out * \
-                  (stdev[:, 0, :].unsqueeze(1).repeat(
-                      1, self.pred_len + self.seq_len, 1))
-        dec_out = dec_out + \
-                  (means[:, 0, :].unsqueeze(1).repeat(
-                      1, self.pred_len + self.seq_len, 1))
+        dec_out = dec_out * (stdev[:, 0, :].unsqueeze(1).repeat(
+            1, self.pred_len + self.seq_len, 1))
+        dec_out = dec_out + (means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len + self.seq_len, 1))
         return dec_out
 
     def imputation(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask):
@@ -143,16 +148,13 @@ class Model(nn.Module):
         # TimesNet
         for i in range(self.layer):
             enc_out = self.layer_norm(self.model[i](enc_out))
-        # porject back
+        # project back
         dec_out = self.projection(enc_out)
 
         # De-Normalization from Non-stationary Transformer
-        dec_out = dec_out * \
-                  (stdev[:, 0, :].unsqueeze(1).repeat(
-                      1, self.pred_len + self.seq_len, 1))
-        dec_out = dec_out + \
-                  (means[:, 0, :].unsqueeze(1).repeat(
-                      1, self.pred_len + self.seq_len, 1))
+        dec_out = dec_out * (stdev[:, 0, :].unsqueeze(1).repeat(
+            1, self.pred_len + self.seq_len, 1))
+        dec_out = dec_out + (means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len + self.seq_len, 1))
         return dec_out
 
     def anomaly_detection(self, x_enc):
@@ -168,16 +170,14 @@ class Model(nn.Module):
         # TimesNet
         for i in range(self.layer):
             enc_out = self.layer_norm(self.model[i](enc_out))
-        # porject back
+        # project back
         dec_out = self.projection(enc_out)
 
         # De-Normalization from Non-stationary Transformer
-        dec_out = dec_out * \
-                  (stdev[:, 0, :].unsqueeze(1).repeat(
-                      1, self.pred_len + self.seq_len, 1))
-        dec_out = dec_out + \
-                  (means[:, 0, :].unsqueeze(1).repeat(
-                      1, self.pred_len + self.seq_len, 1))
+        dec_out = dec_out * (stdev[:, 0, :].unsqueeze(1).repeat(
+            1, self.pred_len + self.seq_len, 1))
+        dec_out = dec_out + (means[:, 0, :].unsqueeze(1).repeat(
+            1, self.pred_len + self.seq_len, 1))
         return dec_out
 
     def classification(self, x_enc, x_mark_enc):

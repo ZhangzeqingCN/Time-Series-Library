@@ -1,16 +1,22 @@
-from data_provider.data_factory import data_provider
-from exp.exp_basic import Exp_Basic
-from utils.tools import EarlyStopping, adjust_learning_rate, cal_accuracy
-import torch
-import torch.nn as nn
-from torch import optim
 import os
 import time
 import warnings
+
 import numpy as np
-import pdb
+import torch
+import torch.nn as nn
+from torch import optim
+
+from data_provider.data_factory import data_provider
+from exp.exp_basic import Exp_Basic
+from utils.tools import EarlyStopping, adjust_learning_rate, cal_accuracy
 
 warnings.filterwarnings('ignore')
+
+
+def _select_criterion():
+    criterion = nn.CrossEntropyLoss()
+    return criterion
 
 
 class Exp_Classification(Exp_Basic):
@@ -38,10 +44,6 @@ class Exp_Classification(Exp_Basic):
     def _select_optimizer(self):
         model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
         return model_optim
-
-    def _select_criterion(self):
-        criterion = nn.CrossEntropyLoss()
-        return criterion
 
     def vali(self, vali_data, vali_loader, criterion):
         total_loss = []
@@ -90,7 +92,7 @@ class Exp_Classification(Exp_Basic):
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
         model_optim = self._select_optimizer()
-        criterion = self._select_criterion()
+        criterion = _select_criterion()
 
         for epoch in range(self.args.train_epochs):
             iter_count = 0
@@ -182,8 +184,8 @@ class Exp_Classification(Exp_Basic):
             os.makedirs(folder_path)
 
         print('accuracy:{}'.format(accuracy))
-        file_name='result_classification.txt'
-        f = open(os.path.join(folder_path,file_name), 'a')
+        file_name = 'result_classification.txt'
+        f = open(os.path.join(folder_path, file_name), 'a')
         f.write(setting + "  \n")
         f.write('accuracy:{}'.format(accuracy))
         f.write('\n')

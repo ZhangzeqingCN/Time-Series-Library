@@ -1,8 +1,11 @@
 import os
+
 import torch
-from models import Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer, \
-    Informer, LightTS, Reformer, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, FiLM, iTransformer, \
-    Koopa, TiDE, FreTS, TimeMixer, TSMixer, SegRNN, MambaSimple, Mamba
+
+# removed MambaSimple, Mamba,
+from models import (Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer,
+                    Informer, LightTS, Reformer, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, FiLM, iTransformer,
+                    Koopa, TiDE, FreTS, TimeMixer, TSMixer, SegRNN, )
 
 
 class Exp_Basic(object):
@@ -28,8 +31,8 @@ class Exp_Basic(object):
             'Koopa': Koopa,
             'TiDE': TiDE,
             'FreTS': FreTS,
-            'MambaSimple': MambaSimple,
-            'Mamba': Mamba,
+            # 'MambaSimple': MambaSimple,
+            # 'Mamba': Mamba,
             'TimeMixer': TimeMixer,
             'TSMixer': TSMixer,
             'SegRNN': SegRNN
@@ -39,7 +42,6 @@ class Exp_Basic(object):
 
     def _build_model(self):
         raise NotImplementedError
-        return None
 
     def _acquire_device(self):
         if self.args.use_gpu:
@@ -52,14 +54,14 @@ class Exp_Basic(object):
             print('Use CPU')
         return device
 
-    def _get_data(self):
+    def _get_data(self, flag: str):
         pass
 
-    def vali(self):
+    def vali(self, vali_data, vali_loader, criterion):
         pass
 
-    def train(self):
+    def train(self, setting: str):
         pass
 
-    def test(self):
+    def test(self, setting: str, test=0):
         pass

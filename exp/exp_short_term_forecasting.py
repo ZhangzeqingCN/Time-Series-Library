@@ -16,6 +16,17 @@ import pandas
 warnings.filterwarnings('ignore')
 
 
+def _select_criterion(loss_name='MSE'):
+    if loss_name == 'MSE':
+        return nn.MSELoss()
+    elif loss_name == 'MAPE':
+        return mape_loss()
+    elif loss_name == 'MASE':
+        return mase_loss()
+    elif loss_name == 'SMAPE':
+        return smape_loss()
+
+
 class Exp_Short_Term_Forecast(Exp_Basic):
     def __init__(self, args):
         super(Exp_Short_Term_Forecast, self).__init__(args)
@@ -40,16 +51,6 @@ class Exp_Short_Term_Forecast(Exp_Basic):
         model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
         return model_optim
 
-    def _select_criterion(self, loss_name='MSE'):
-        if loss_name == 'MSE':
-            return nn.MSELoss()
-        elif loss_name == 'MAPE':
-            return mape_loss()
-        elif loss_name == 'MASE':
-            return mase_loss()
-        elif loss_name == 'SMAPE':
-            return smape_loss()
-
     def train(self, setting):
         train_data, train_loader = self._get_data(flag='train')
         vali_data, vali_loader = self._get_data(flag='val')
@@ -64,7 +65,7 @@ class Exp_Short_Term_Forecast(Exp_Basic):
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
         model_optim = self._select_optimizer()
-        criterion = self._select_criterion(self.args.loss)
+        criterion = _select_criterion(self.args.loss)
         mse = nn.MSELoss()
 
         for epoch in range(self.args.train_epochs):

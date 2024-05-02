@@ -5,7 +5,6 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import accuracy_score
 import torch.multiprocessing
 
-torch.multiprocessing.set_sharing_strategy('file_system')
 import torch
 import torch.nn as nn
 from torch import optim
@@ -14,12 +13,20 @@ import time
 import warnings
 import numpy as np
 
+torch.multiprocessing.set_sharing_strategy('file_system')
+
 warnings.filterwarnings('ignore')
+
+
+def _select_criterion() -> torch.nn.modules.loss.MSELoss:
+    criterion = nn.MSELoss()
+    return criterion
 
 
 class Exp_Anomaly_Detection(Exp_Basic):
     def __init__(self, args):
         super(Exp_Anomaly_Detection, self).__init__(args)
+        self.anomaly_criterion = None
 
     def _build_model(self):
         model = self.model_dict[self.args.model].Model(self.args).float()
@@ -35,10 +42,6 @@ class Exp_Anomaly_Detection(Exp_Basic):
     def _select_optimizer(self):
         model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
         return model_optim
-
-    def _select_criterion(self):
-        criterion = nn.MSELoss()
-        return criterion
 
     def vali(self, vali_data, vali_loader, criterion):
         total_loss = []
@@ -75,7 +78,7 @@ class Exp_Anomaly_Detection(Exp_Basic):
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
         model_optim = self._select_optimizer()
-        criterion = self._select_criterion()
+        criterion = _select_criterion()
 
         for epoch in range(self.args.train_epochs):
             iter_count = 0

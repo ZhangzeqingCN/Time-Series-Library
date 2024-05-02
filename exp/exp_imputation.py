@@ -13,6 +13,11 @@ import numpy as np
 warnings.filterwarnings('ignore')
 
 
+def _select_criterion():
+    criterion = nn.MSELoss()
+    return criterion
+
+
 class Exp_Imputation(Exp_Basic):
     def __init__(self, args):
         super(Exp_Imputation, self).__init__(args)
@@ -31,10 +36,6 @@ class Exp_Imputation(Exp_Basic):
     def _select_optimizer(self):
         model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
         return model_optim
-
-    def _select_criterion(self):
-        criterion = nn.MSELoss()
-        return criterion
 
     def vali(self, vali_data, vali_loader, criterion):
         total_loss = []
@@ -90,7 +91,7 @@ class Exp_Imputation(Exp_Basic):
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
         model_optim = self._select_optimizer()
-        criterion = self._select_criterion()
+        criterion = _select_criterion()
 
         for epoch in range(self.args.train_epochs):
             iter_count = 0
@@ -199,8 +200,8 @@ class Exp_Imputation(Exp_Basic):
 
                 if i % 20 == 0:
                     filled = true[0, :, -1].copy()
-                    filled = filled * mask[0, :, -1].detach().cpu().numpy() + \
-                             pred[0, :, -1] * (1 - mask[0, :, -1].detach().cpu().numpy())
+                    filled = filled * mask[0, :, -1].detach().cpu().numpy() + pred[0, :, -1] * (
+                                1 - mask[0, :, -1].detach().cpu().numpy())
                     visual(true[0, :, -1], filled, os.path.join(folder_path, str(i) + '.pdf'))
 
         preds = np.concatenate(preds, 0)

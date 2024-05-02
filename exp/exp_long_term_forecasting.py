@@ -1,3 +1,5 @@
+import typing
+
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
@@ -13,6 +15,11 @@ import numpy as np
 warnings.filterwarnings('ignore')
 
 
+def _select_criterion() -> torch.nn.modules.loss.MSELoss:
+    criterion = nn.MSELoss()
+    return criterion
+
+
 class Exp_Long_Term_Forecast(Exp_Basic):
     def __init__(self, args):
         super(Exp_Long_Term_Forecast, self).__init__(args)
@@ -24,17 +31,13 @@ class Exp_Long_Term_Forecast(Exp_Basic):
             model = nn.DataParallel(model, device_ids=self.args.device_ids)
         return model
 
-    def _get_data(self, flag):
+    def _get_data(self, flag: str):
         data_set, data_loader = data_provider(self.args, flag)
         return data_set, data_loader
 
     def _select_optimizer(self):
         model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
         return model_optim
-
-    def _select_criterion(self):
-        criterion = nn.MSELoss()
-        return criterion
 
     def vali(self, vali_data, vali_loader, criterion):
         total_loss = []
@@ -91,7 +94,9 @@ class Exp_Long_Term_Forecast(Exp_Basic):
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
         model_optim = self._select_optimizer()
-        criterion = self._select_criterion()
+        criterion = _select_criterion()
+
+        scaler: typing.Union[torch.cuda.amp.grad_scaler.GradScaler, object] = object()
 
         if self.args.use_amp:
             scaler = torch.cuda.amp.GradScaler()
@@ -222,7 +227,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                     shape = outputs.shape
                     outputs = test_data.inverse_transform(outputs.squeeze(0)).reshape(shape)
                     batch_y = test_data.inverse_transform(batch_y.squeeze(0)).reshape(shape)
-        
+
                 outputs = outputs[:, :, f_dim:]
                 batch_y = batch_y[:, :, f_dim:]
 

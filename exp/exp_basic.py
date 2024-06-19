@@ -1,15 +1,23 @@
 import os
+from typing import Dict
 
 import torch
+from objprint import add_objprint
 
 # removed MambaSimple, Mamba,
 from models import (Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer,
                     Informer, LightTS, Reformer, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, FiLM, iTransformer,
                     Koopa, TiDE, FreTS, TimeMixer, TSMixer, SegRNN, )
+from utils.args import Args
 
 
+@add_objprint(print_methods=True)
 class Exp_Basic(object):
-    def __init__(self, args):
+    device: torch.device
+    model: torch.nn.Module
+    model_dict: Dict[str, torch.nn.Module]
+
+    def __init__(self, args: Args):
         self.args = args
         self.model_dict = {
             'TimesNet': TimesNet,
@@ -60,7 +68,12 @@ class Exp_Basic(object):
     def vali(self, vali_data, vali_loader, criterion):
         pass
 
-    def train(self, setting: str):
+    def train(self, setting: str) -> 'Exp_Basic':
+        """
+        train
+        @param setting: 用于生成检查点文件路径，无实质作用
+        @return:
+        """
         pass
 
     def test(self, setting: str, test=0):

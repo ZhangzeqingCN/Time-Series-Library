@@ -1,6 +1,6 @@
 import argparse
 import random
-import typing
+from typing import Union, Type
 
 import numpy as np
 import torch
@@ -11,7 +11,7 @@ from exp.exp_classification import Exp_Classification
 from exp.exp_imputation import Exp_Imputation
 from exp.exp_long_term_forecasting import Exp_Long_Term_Forecast
 from exp.exp_short_term_forecasting import Exp_Short_Term_Forecast
-from utils.args import print_args, parse_args
+from utils.args import print_args, parse_args, Args
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
     torch.manual_seed(fix_seed)
     np.random.seed(fix_seed)
 
-    parsed_args: argparse.Namespace = parse_args()
+    parsed_args: Union[argparse.Namespace, Args] = parse_args()
 
     # 是否使用GPU
 
@@ -40,7 +40,9 @@ def main():
     print('Args in experiment:')
     print_args(parsed_args)
 
-    Exp: typing.Type[Exp_Basic]
+    Exp: Type[Exp_Basic]
+
+    # 按参数选择模型
 
     if parsed_args.task_name == 'long_term_forecast':
         Exp = Exp_Long_Term_Forecast

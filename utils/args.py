@@ -1,20 +1,116 @@
 import argparse
 import dataclasses
-import typing
+from typing import Union, Literal, List
 
 
 @dataclasses.dataclass
 class Args:
-    model_id: str
-    model: str
-    data: str
-    # with default value
+    activation: str = 'gelu'
+    # prior anomaly ratio (%)
+    anomaly_ratio: float = 0.25
+    # batch size of train input data
+    batch_size: int = 32
+    # output size
+    c_out: int = 7
+    # 0: channel dependence 1: channel independence for FreTS model
+    channel_independence: int = 1
+    # location of model checkpoints
+    checkpoints: str = './checkpoints/'
+    # conv kernel size for Mamba
+    d_conv: int = 4
+    # dimension of fcn
+    d_ff: int = 2048
+    # num of decoder layers
+    d_layers: int = 1
+    # dimension of model
+    d_model: int = 512
+    data_path: str = 'ETTh1.csv'
+    # decoder input size
+    dec_in: int = 7
+    # method of series decompsition, only support moving_avg or dft_decomp
+    decomp_method: Literal['moving_avg', 'dft_decomp'] = 'moving_avg'
+    des: str = 'test'
+    # device ids of multile gpus
+    devices: str = '0,1,2,3'
+    # whether to use distilling in encoder, using this argument means not using distilling
+    distil: bool = True
+    # num of down sampling layers
+    down_sampling_layers: int = 0
+    # down sampling window size
+    down_sampling_window: int = 1
+    dropout: float = 0.01
+    # num of encoder layers
+    e_layers: int = 2
+    # time features encoding
+    embed: Literal['timeF', 'fixed', 'learned'] = 'timeF'
+    # encoder input size
+    enc_in: int = 7
+    # expansion factor for Mamba
+    expand: int = 2
+    # attn factor
+    factor: int = 1
+    gpu: int = 0
+    # inverse output data
+    inverse: bool = False
     is_training: int = 1
-    task_name: typing.Literal[
+    # experiments times
+    itr: int = 1
+    # start token length
+    label_len: int = 48
+    learning_rate: float = 0.0001
+    # loss function
+    loss: str = 'MSE'
+    # adjust learning rate
+    lradj: str = 'type1'
+    mask_rate: float = 0.25
+    model_id: str = 'test'
+    # window size of moving average
+    moving_avg: int = 25
+    # num of heads
+    n_heads: int = 8
+    # for Inception
+    num_kernels: int = 6
+    # data loader num workers
+    num_workers: int = 10
+    # whether to output attention in ecoder
+    output_attention: bool = False
+    p_hidden_dims: List[int] = (128, 128)
+    p_hidden_layers: int = 2
+    patience: int = 3
+    # prediction sequence length
+    pred_len: int = 96
+    # subset for M4
+    seasonal_patterns: str = 'Monthly'
+    # the length of segmen-wise iteration of SegRNN
+    seg_len: int = 48
+    # input sequence length
+    seq_len: int = 96
+    # target feature in S or MS task
+    target: str = 'OT'
+    # for TimesBlock
+    top_k: int = 5
+    # train epochs
+    train_epochs: int = 10
+    use_amp: bool = False
+    use_gpu: bool = True
+    use_multi_gpu: bool = False
+    # whether to use normalize; True 1 False 0
+    use_norm: int = 1
+    # ???
+    num_class: int = 1
+    task_name: Literal[
         'long_term_forecast', 'short_term_forecast', 'imputation', 'classification', 'anomaly_detection'] = 'long_term_forecast'
+    model: Literal['Autoformer', 'Transformer', 'TimesNet'] = 'Autoformer'
+    # [s:secondly, t:minutely, h:hourly, d:daily, b:business days, w:weekly, m:monthly]
+    freq: Literal['s', 't', 'h', 'd', 'b', 'm', 'w'] = 'h'
+    down_sampling_method: Literal['avg', 'max', 'conv', None] = None
+    # [M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate
+    features: Literal['M', 'S', 'MS'] = 'M'
+    root_path: str = './data/ETT/'
+    data: str = 'ETTm1'
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args() -> Union[argparse.Namespace, Args]:
     parser: argparse.ArgumentParser = argparse.ArgumentParser(description='TimesNet')
 
     # basic config
@@ -107,12 +203,10 @@ def parse_args() -> argparse.Namespace:
                         help='hidden layer dimensions of projector (List)')
     parser.add_argument('--p_hidden_layers', type=int, default=2, help='number of hidden layers in projector')
 
-
-
     return parser.parse_args()
 
 
-def print_args(args):
+def print_args(args: Args):
     print("\033[1m" + "Basic Config" + "\033[0m")
     print(f'  {"Task Name:":<20}{args.task_name:<20}{"Is Training:":<20}{args.is_training:<20}')
     print(f'  {"Model ID:":<20}{args.model_id:<20}{"Model:":<20}{args.model:<20}')
